@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -19,14 +18,7 @@ func main() {
 
 	r := bufio.NewReader(file)
 
-	nop, err := r.ReadString('\n')
-	var numberOfPeers, _ = strconv.Atoi(strings.TrimSpace(nop))
-	log.Println("Number of peers is: ", numberOfPeers)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	for i := 0; i < numberOfPeers; i++ {
+	for i := 0; i < 3; i++ {
 		port, err := r.ReadString('\n') //! Make sure last line has a new line
 		log.Println(port)
 		if err != nil {
