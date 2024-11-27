@@ -43,9 +43,9 @@ func NewBidder(name, port string) *Bidder {
 }
 
 // Join connects to the server and starts listening for auction updates on the JoinAuction stream
-func (c *Bidder) Join() {
+func (b *Bidder) Join() {
 	// Start the JoinAuction stream to listen for incoming auction updates
-	stream, err := c.AuctionserviceClient.JoinAuction(context.Background(), &auction.Empty{})
+	stream, err := b.AuctionserviceClient.JoinAuction(context.Background(), &auction.Empty{})
 	if err != nil {
 		log.Fatalf("Failed to join auction: %v", err)
 	}
@@ -62,11 +62,11 @@ func (c *Bidder) Join() {
 	}()
 
 	// Start sending bids to the server
-	c.SendBids()
+	b.SendBids()
 }
 
 // SendBids prompts the user to send bids
-func (c *Bidder) SendBids() {
+func (b *Bidder) SendBids() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("Enter bid amount: ")
@@ -82,8 +82,8 @@ func (c *Bidder) SendBids() {
 			log.Fatalf("Failed to parse bid amount: %v", err)
 		}
 		// Send the bid to the server using the SendBid method
-		_, err = c.AuctionserviceClient.SendBid(context.Background(), &auction.Bid{
-			Bidder:    c.bidder,
+		_, err = b.AuctionserviceClient.SendBid(context.Background(), &auction.Bid{
+			Bidder:    b.bidder,
 			Bid:       bid,
 			Timestamp: time.Now().Unix(),
 		})
@@ -94,8 +94,8 @@ func (c *Bidder) SendBids() {
 }
 
 // Close closes the gRPC connection
-func (c *Bidder) Close() {
-	if c.conn != nil {
-		c.conn.Close()
+func (b *Bidder) Close() {
+	if b.conn != nil {
+		b.conn.Close()
 	}
 }
