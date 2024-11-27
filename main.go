@@ -50,6 +50,9 @@ func main() {
 			// Start the server
 		} else if result == "Start new Client" {
 			// Start a new client
+		} else if result == "Exit" {
+			log.Println("Exiting...")
+			os.Exit(0)
 		}
 	}
 }
