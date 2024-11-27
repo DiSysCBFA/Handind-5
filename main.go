@@ -2,18 +2,16 @@ package main
 
 import (
 	"bufio"
+	client "github.com/DiSysCBFA/Handind-5/Client"
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"strings"
-
 	"github.com/manifoldco/promptui"
 
 	api "github.com/DiSysCBFA/Handind-5/Api"
 	server "github.com/DiSysCBFA/Handind-5/Server"
 	"google.golang.org/grpc"
-)
 
 func main() {
 	file, err := os.Open("ports.txt")
@@ -31,11 +29,10 @@ func main() {
 		return
 	}
 
-	numberOfPeers, _ := strconv.Atoi(strings.TrimSpace(nop))
-	log.Printf("Number of peers: %d", numberOfPeers)
+	for i := 0; i < 3; i++ {
+		port, err := r.ReadString('\n') //! Make sure last line has a new line
+		log.Println(port)
 
-	for i := 0; i < numberOfPeers; i++ {
-		port, err := r.ReadString('\n')
 		if err != nil {
 			break
 		}
@@ -60,11 +57,14 @@ func main() {
 			selectBidderName := promptui.Prompt{
 				Label: "Enter desired name",
 			}
-			Bidder, err := selectBidderName.Run()
+			bidder, err := selectBidderName.Run()
 			if err != nil {
 				log.Fatalf("Failed to run: %v", err)
 			}
-			log.Println("Bidder name:", Bidder)
+			log.Println("Bidder name:", bidder)
+			b := client.NewBidder(bidder, "4000")
+			go b.Join([]string{"localhost:4000", "localhost:4001", "localhost:4002"})
+			go b.SendBids([]string{"localhost:4000", "localhost:4001", "localhost:4002"})
 
 			// Start a new client
 		} else if result == "Exit" {
