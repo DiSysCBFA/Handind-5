@@ -50,6 +50,15 @@ func main() {
 			// Start the server
 		} else if result == "Start new Client" {
 			// Start a new client
+			selectBidderName := promptui.Prompt{
+				Label: "Enter desired name",
+			}
+			Bidder, err := selectBidderName.Run()
+			if err != nil {
+				log.Fatalf("Failed to run: %v", err)
+			}
+			log.Println("Bidder name:", Bidder)
+
 		} else if result == "Exit" {
 			log.Println("Exiting...")
 			os.Exit(0)
