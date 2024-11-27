@@ -2,16 +2,18 @@ package main
 
 import (
 	"bufio"
-	client "github.com/DiSysCBFA/Handind-5/Client"
 	"log"
 	"net"
 	"os"
 	"strings"
+
 	"github.com/manifoldco/promptui"
 
 	api "github.com/DiSysCBFA/Handind-5/Api"
+	client "github.com/DiSysCBFA/Handind-5/Client"
 	server "github.com/DiSysCBFA/Handind-5/Server"
 	"google.golang.org/grpc"
+)
 
 func main() {
 	file, err := os.Open("ports.txt")
@@ -22,12 +24,6 @@ func main() {
 	defer file.Close()
 
 	r := bufio.NewReader(file)
-
-	nop, err := r.ReadString('\n')
-	if err != nil {
-		log.Fatal("Failed to read number of peers:", err)
-		return
-	}
 
 	for i := 0; i < 3; i++ {
 		port, err := r.ReadString('\n') //! Make sure last line has a new line
