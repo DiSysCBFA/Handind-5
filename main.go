@@ -3,11 +3,16 @@ package main
 import (
 	"bufio"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/manifoldco/promptui"
+
+	api "github.com/DiSysCBFA/Handind-5/Api"
+	server "github.com/DiSysCBFA/Handind-5/Server"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -16,25 +21,27 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+	defer file.Close()
 
 	r := bufio.NewReader(file)
 
 	nop, err := r.ReadString('\n')
-	var numberOfPeers, _ = strconv.Atoi(strings.TrimSpace(nop))
-	log.Println("Number of peers is: ", numberOfPeers)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to read number of peers:", err)
 		return
 	}
+
+	numberOfPeers, _ := strconv.Atoi(strings.TrimSpace(nop))
+	log.Printf("Number of peers: %d", numberOfPeers)
+
 	for i := 0; i < numberOfPeers; i++ {
-		port, err := r.ReadString('\n') //! Make sure last line has a new line
-		log.Println(port)
+		port, err := r.ReadString('\n')
 		if err != nil {
 			break
 		}
 
 		port = strings.TrimSpace(port)
-		log.Println(port) // Displaying each port read
+		log.Printf("Reading port: %s", port)
 
 		selection := promptui.Select{
 			Label: "Select an option",
@@ -43,13 +50,13 @@ func main() {
 
 		_, result, err := selection.Run()
 		if err != nil {
-			log.Fatalf("Failed to run: %v", err)
+			log.Fatalf("Failed to run selection: %v", err)
 		}
 
 		if result == "Start Server" {
-			// Start the server
+			log.Printf("Starting server on port %s...", port)
+			startServer(port)
 		} else if result == "Start new Client" {
-			// Start a new client
 			selectBidderName := promptui.Prompt{
 				Label: "Enter desired name",
 			}
@@ -59,9 +66,25 @@ func main() {
 			}
 			log.Println("Bidder name:", Bidder)
 
+			// Start a new client
 		} else if result == "Exit" {
 			log.Println("Exiting...")
 			os.Exit(0)
 		}
+	}
+}
+
+func startServer(port string) {
+	listener, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("Failed to listen on port %s: %v", port, err)
+	}
+	grpcServer := grpc.NewServer()
+	auctionServer := server.NewServer(port)
+	api.RegisterAuctionserviceServer(grpcServer, auctionServer)
+
+	log.Printf("Server started on port %s", port)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }
