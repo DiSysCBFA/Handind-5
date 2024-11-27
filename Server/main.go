@@ -18,37 +18,49 @@ type Server struct {
 
 func NewServer(port string) *Server {
 	return &Server{
-		Port: port,
+		Port:                 port,
+		CurrentHighestBid:    0,
+		CurrentHighestBidder: "",
+		AuctionStatus:        "Active",
+		Bidders:              make(map[string]int64),
 	}
 }
 
 func (s *Server) SendBid(bid *api.Bid) (*api.BidAck, error) {
 
-	// Checking if the auction is ongoing
 	if s.AuctionStatus == "ENDED" {
-		return &api.BidAck{Ack: "Auction has ended. No more bids allowed."}, nil
+		return &api.BidAck{Ack: "Auction has ended. No more bids allowed."}, nil // Checking if the auction is active
 	}
 
-	// checking the bid amount
-	if bid.Bid <= s.CurrentHighestBid {
+	if bid.Bid <= s.CurrentHighestBid { // checking the bid amount
 		return &api.BidAck{Ack: fmt.Sprintf("Bid too low. Current highest bid is %d.", s.CurrentHighestBid)}, nil
 	}
 
-	// Register the bidder if it's their first bid
-	if _, exists := s.Bidders[bid.Bidder]; !exists {
+	if _, exists := s.Bidders[bid.Bidder]; !exists { // Register the bidder if it's their first bid
 		s.Bidders[bid.Bidder] = bid.Bid
 	}
 
-	// Update the auction state
 	s.CurrentHighestBid = bid.Bid
 	s.CurrentHighestBidder = bid.Bidder
-	log.Printf("New highest bid: %d by %s", bid.Bid, bid.Bidder)
+	log.Printf("New highest bid: %d by %s", bid.Bid, bid.Bidder) // Update the auction state
 
-	// Return if success
-	return &api.BidAck{Ack: "Bid accepted"}, nil
+	return &api.BidAck{Ack: "Bid accepted"}, nil // Returns "Bid accepted" if success
 }
 
-func (s *Server) JoinAuction(stream api.Auctionservice_JoinAuctionServer) error {
-	return nil
+func (s *Server) JoinAuction(stream api.Auctionservice_JoinAuctionServer) error { // Streaming out the current auction state periodically
+	for {
+		if s.AuctionStatus == "ENDED" { // Check if the auction has ended
+			return stream.Send(&api.Auction{
+				Status: fmt.Sprintf("Auction ended. Winner: %s with bid %d", s.CurrentHighestBidder, s.CurrentHighestBid),
+			})
+		}
+		err := stream.Send(&api.Auction{
+			Status: fmt.Sprintf("Current highest bid: %d by %s", s.CurrentHighestBid, s.CurrentHighestBidder), // Streaming the current highest bid and bidder
+		})
+		if err != nil {
+			log.Printf("Error sending auction update to client: %v", err) // Error if can't stream
+			return err
+		}
+	}
 
 }
