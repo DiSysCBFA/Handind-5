@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
+
 	"time"
 
+	h5 "github.com/DiSysCBFA/Handind-5/Api"
 	"google.golang.org/grpc"
 
 	auction "github.com/DiSysCBFA/Handind-5/Api"
@@ -42,54 +42,72 @@ func NewBidder(name, port string) *Bidder {
 	}
 }
 
-// Join connects to the server and starts listening for auction updates on the JoinAuction stream
-func (b *Bidder) Join() {
-	// Start the JoinAuction stream to listen for incoming auction updates
-	stream, err := b.AuctionserviceClient.JoinAuction(context.Background(), &auction.Empty{})
-	if err != nil {
-		log.Fatalf("Failed to join auction: %v", err)
-	}
-
-	// Listen for auction updates in a separate goroutine
-	go func() {
-		for {
-			in, err := stream.Recv()
-			if err != nil {
-				log.Fatalf("Failed to receive auction update: %v", err)
+func (b *Bidder) Join(ports []string) {
+	for i, port := range ports {
+		conn, err := grpc.Dial(port, grpc.WithInsecure())
+		if err == nil {
+			defer conn.Close()
+			client := h5.NewAuctionserviceClient(conn)
+			stream, err := client.JoinAuction(context.Background(), &auction.Empty{})
+			if err == nil {
+				go func() {
+					for {
+						in, err := stream.Recv()
+						if err != nil {
+							log.Printf("Failed to receive auction update: %v", err)
+							break
+						}
+						log.Printf("Auction status: %s", in.Status)
+					}
+				}()
+				return
 			}
-			log.Printf("Auction status: %s", in.Status)
 		}
-	}()
-
-	// Start sending bids to the server
-	b.SendBids()
+		if i == len(ports)-1 {
+			log.Println("All servers are down")
+			return
+		}
+	}
 }
 
 // SendBids prompts the user to send bids
-func (b *Bidder) SendBids() {
+func (b *Bidder) SendBids(ports []string) {
 	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print("Enter bid amount: ")
-		bidAmount, err := reader.ReadString('\n')
-		if err != nil {
-			log.Fatalf("Failed to read bid amount: %v", err)
-		}
+	var bidamount int64
+	fmt.Print("Enter your bid: ")
+	_, err := fmt.Fscanf(reader, "%d\n", &bidamount)
+	if err != nil {
+		log.Fatal(err)
+	}
+	newbid := &h5.Bid{
+		Bidder:    b.bidder,
+		Bid:       bidamount,
+		Timestamp: time.Now().Unix(),
+	}
 
-		// Trim newline characters from the bid amount
-		bidAmount = strings.TrimSpace(bidAmount)
-		bid, err := strconv.ParseInt(bidAmount, 10, 64)
-		if err != nil {
-			log.Fatalf("Failed to parse bid amount: %v", err)
-		}
-		// Send the bid to the server using the SendBid method
-		_, err = b.AuctionserviceClient.SendBid(context.Background(), &auction.Bid{
-			Bidder:    b.bidder,
-			Bid:       bid,
-			Timestamp: time.Now().Unix(),
-		})
-		if err != nil {
-			log.Fatalf("Failed to send bid: %v", err)
-		}
+	for _, port := range ports {
+		go func(port string) {
+			conn, err := grpc.Dial(port, grpc.WithInsecure())
+			if err != nil {
+				log.Printf("Failed to connect to %s: %v", port, err)
+				return
+			}
+			defer func(conn *grpc.ClientConn) {
+				err := conn.Close()
+				if err != nil {
+
+				}
+			}(conn)
+
+			client := h5.NewAuctionserviceClient(conn)
+			_, err = client.SendBid(context.Background(), newbid)
+			if err != nil {
+				log.Printf("Error sending bid to auction")
+			} else {
+				log.Printf("bid sent to auction")
+
+			}
+		}(port)
 	}
 }
 
