@@ -20,7 +20,7 @@ type Client struct {
 	auction.AuctionserviceClient
 	conn      *grpc.ClientConn
 	port      string
-	name      string
+	bidder    string
 	timestamp int
 }
 
@@ -37,7 +37,7 @@ func NewClient(name, port string) *Client {
 		AuctionserviceClient: client,
 		conn:                 conn,
 		port:                 port,
-		name:                 name,
+		bidder:               name,
 		timestamp:            0,
 	}
 }
@@ -83,7 +83,7 @@ func (c *Client) SendBids() {
 		}
 		// Send the bid to the server using the SendBid method
 		_, err = c.AuctionserviceClient.SendBid(context.Background(), &auction.Bid{
-			Bidder:    c.name,
+			Bidder:    c.bidder,
 			Bid:       bid,
 			Timestamp: time.Now().Unix(),
 		})
