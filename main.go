@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	client "github.com/DiSysCBFA/Handind-5/Client"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/manifoldco/promptui"
+	_ "github.com/DiSysCBFA/Handind-5/Server"
+	
 )
 
 func main() {
@@ -45,11 +47,14 @@ func main() {
 			selectBidderName := promptui.Prompt{
 				Label: "Enter desired name",
 			}
-			Bidder, err := selectBidderName.Run()
+			bidder, err := selectBidderName.Run()
 			if err != nil {
 				log.Fatalf("Failed to run: %v", err)
 			}
-			log.Println("Bidder name:", Bidder)
+			log.Println("Bidder name:", bidder)
+			b := client.NewBidder(bidder, "4000")
+			go b.Join([]string{"localhost:4000", "localhost:4001", "localhost:4002"})
+			go b.SendBids([]string{"localhost:4000", "localhost:4001", "localhost:4002"})
 
 		} else if result == "Exit" {
 			log.Println("Exiting...")
