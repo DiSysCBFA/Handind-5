@@ -15,8 +15,8 @@ import (
 	auction "github.com/DiSysCBFA/Handind-5/Api"
 )
 
-// Client represents an auction client with a gRPC connection
-type Client struct {
+// Bidder represents an auction client with a gRPC connection
+type Bidder struct {
 	auction.AuctionserviceClient
 	conn      *grpc.ClientConn
 	port      string
@@ -24,8 +24,8 @@ type Client struct {
 	timestamp int
 }
 
-// NewClient creates a new client instance and initializes the gRPC connection
-func NewClient(name, port string) *Client {
+// NewBidder creates a new client instance and initializes the gRPC connection
+func NewBidder(name, port string) *Bidder {
 	address := "localhost:" + port
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -33,7 +33,7 @@ func NewClient(name, port string) *Client {
 	}
 
 	client := auction.NewAuctionserviceClient(conn)
-	return &Client{
+	return &Bidder{
 		AuctionserviceClient: client,
 		conn:                 conn,
 		port:                 port,
@@ -43,7 +43,7 @@ func NewClient(name, port string) *Client {
 }
 
 // Join connects to the server and starts listening for auction updates on the JoinAuction stream
-func (c *Client) Join() {
+func (c *Bidder) Join() {
 	// Start the JoinAuction stream to listen for incoming auction updates
 	stream, err := c.AuctionserviceClient.JoinAuction(context.Background(), &auction.Empty{})
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *Client) Join() {
 }
 
 // SendBids prompts the user to send bids
-func (c *Client) SendBids() {
+func (c *Bidder) SendBids() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("Enter bid amount: ")
@@ -94,7 +94,7 @@ func (c *Client) SendBids() {
 }
 
 // Close closes the gRPC connection
-func (c *Client) Close() {
+func (c *Bidder) Close() {
 	if c.conn != nil {
 		c.conn.Close()
 	}

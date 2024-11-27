@@ -16,13 +16,13 @@ This will lead to the following ui to be displayed:
 Use the arrow keys to navigate: ↓ ↑ → ← 
 ? Select an option: 
   ▸ Start Server
-    Start new Client
+    Start new Bidder
     Exit
 `````
 
 Selecting $Start\:server$:
 
-Selecting $Start\:new\:Client$:
+Selecting $Start\:new\:Bidder$:
 
 Selecting $Exit$ will exit the program. and display the following:
 ```bash
