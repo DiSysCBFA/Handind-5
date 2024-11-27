@@ -10,3 +10,17 @@ type Server struct {
 	CurrentHighestBid    int64
 	CurrentHighestBidder string
 }
+
+func NewServer(port string) *Server {
+	return &Server{
+		Port: port,
+	}
+}
+
+func SendBid(bid *api.Bid) (*api.BidAck, error) {
+	return &api.BidAck{Ack: "Bid Accepted"}, nil
+}
+
+func JoinAuction(stream api.Auctionservice_JoinAuctionServer) error {
+	return nil
+}
