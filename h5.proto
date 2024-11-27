@@ -1,0 +1,30 @@
+﻿syntax = "proto3";
+
+
+
+option go_package = "github.com/DiSysCBFA/Handind-5/Api";
+
+package Auction_service;
+
+service Auctionservice {
+  rpc SendBid(Bid) returns (bidAck) {}
+  rpc JoinAuction(empty) returns (stream Auction) {}
+
+}
+
+message empty {}
+
+
+message Bid {
+  string Bidder = 1;
+  int64 bid = 2;
+  int64 timestamp = 3;
+}
+
+message bidAck{
+  string ack = 1;
+}
+
+message Auction {
+  string status = 1;
+}
