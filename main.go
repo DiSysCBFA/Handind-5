@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	// Ports to try in sequence
 	ports := []int{4000, 4001, 4002, 4003, 4004}
 	maxRetries := len(ports) - 1
 
