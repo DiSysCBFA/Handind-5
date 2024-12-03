@@ -14,7 +14,7 @@ func main() {
 	for {
 		selection := promptui.Select{
 			Label: "Select an option",
-			Items: []string{"Start Server", "Exit"},
+			Items: []string{"Start Server", "Start Client", "Exit"},
 		}
 
 		_, result, err := selection.Run()
@@ -26,6 +26,8 @@ func main() {
 			log.Println("Starting server...")
 			auctionServer := server.NewServer("")
 			auctionServer.Start(ports[0], maxRetries)
+		} else if result == "Start Client" {
+
 		} else if result == "Exit" {
 			log.Println("Exiting...")
 			break
