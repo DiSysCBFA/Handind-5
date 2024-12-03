@@ -5,7 +5,9 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
+	"time"
 
 	h5 "github.com/DiSysCBFA/Handind-5/Api"
 	"github.com/manifoldco/promptui"
@@ -27,7 +29,7 @@ func StartClient(wg *sync.WaitGroup, ports []string, id string) {
 		}
 
 		if selectedAction == "Bid" {
-			getBid(client)
+			getBid(client, id, ports)
 		} else if selectedAction == "Result" {
 			retreiveResult(ports)
 		} else if selectedAction == "Exit" {
@@ -69,6 +71,48 @@ func retreiveResult(ports []string) {
 	}
 }
 
-func getBid(client h5.AuctionserviceClient) {
+func getBid(client h5.AuctionserviceClient, id string, ports []string) {
+	enterBid := promptui.Prompt{
+		Label: "Enter bid",
+	}
+	bid, err := enterBid.Run()
+	if err != nil {
+		log.Fatalf("Failed to enter bid: %v", err)
+	}
+	intBid, err := strconv.Atoi(bid)
+	if err != nil {
+		log.Fatalf("Failed to convert bid to int: %v", err)
+	}
 
+	responses := [3]*h5.BidAck{}
+
+	for index, port := range ports {
+		conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Println("The server at port " + port + " has crashed")
+			continue
+		}
+		activeBid := &h5.Bid{
+			Bid:       int64(intBid),
+			Bidder:    id,
+			Timestamp: time.Now().Unix(),
+		}
+
+		client = h5.NewAuctionserviceClient(conn)
+		respons, err := client.TryBid(context.Background(), activeBid)
+		if err != nil {
+			log.Println("The server at port " + port + " has crashed")
+			continue
+		}
+		responses[index] = respons
+	}
+	if reflect.DeepEqual(responses[0], responses[1]) {
+		log.Println(responses[0].Ack)
+	} else if reflect.DeepEqual(responses[0], responses[2]) {
+		log.Println(responses[0].Ack)
+	} else if reflect.DeepEqual(responses[1], responses[2]) {
+		log.Println(responses[1].Ack)
+	} else {
+		log.Println("Servers cant reach consensus. More than one server dont work")
+	}
 }
