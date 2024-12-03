@@ -7,8 +7,8 @@ option go_package = "github.com/DiSysCBFA/Handind-5/Api";
 package Auction_service;
 
 service Auctionservice {
-  rpc SendBid(Bid) returns (bidAck) {}
-  rpc JoinAuction(empty) returns (stream Auction) {}
+  rpc tryBid(Bid) returns (bidAck) {}
+  rpc JoinAuction(empty) returns (AuctionResult) {}
 
 }
 
@@ -23,8 +23,9 @@ message Bid {
 
 message bidAck{
   string ack = 1;
+  int32 timestamp = 2;
 }
 
-message Auction {
+message AuctionResult {
   string status = 1;
 }

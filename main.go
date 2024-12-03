@@ -2,13 +2,17 @@ package main
 
 import (
 	"log"
+	"os"
+	"sync"
 
+	client "github.com/DiSysCBFA/Handind-5/Client"
 	server "github.com/DiSysCBFA/Handind-5/Server"
 	"github.com/manifoldco/promptui"
 )
 
 func main() {
-	ports := []int{4000, 4001, 4002, 4003, 4004}
+	var wg sync.WaitGroup
+	ports := []int{4000, 4001, 4002}
 	maxRetries := len(ports) - 1
 
 	for {
@@ -27,10 +31,10 @@ func main() {
 			auctionServer := server.NewServer("")
 			auctionServer.Start(ports[0], maxRetries)
 		} else if result == "Start Client" {
-
+			go client.StartClient(&wg, ports)
 		} else if result == "Exit" {
 			log.Println("Exiting...")
-			break
+			os.Exit(0)
 		}
 	}
 }

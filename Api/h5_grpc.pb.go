@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auctionservice_SendBid_FullMethodName     = "/Auction_service.Auctionservice/SendBid"
+	Auctionservice_TryBid_FullMethodName      = "/Auction_service.Auctionservice/tryBid"
 	Auctionservice_JoinAuction_FullMethodName = "/Auction_service.Auctionservice/JoinAuction"
 )
 
@@ -27,8 +27,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuctionserviceClient interface {
-	SendBid(ctx context.Context, in *Bid, opts ...grpc.CallOption) (*BidAck, error)
-	JoinAuction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Auction], error)
+	TryBid(ctx context.Context, in *Bid, opts ...grpc.CallOption) (*BidAck, error)
+	JoinAuction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuctionResult, error)
 }
 
 type auctionserviceClient struct {
@@ -39,41 +39,32 @@ func NewAuctionserviceClient(cc grpc.ClientConnInterface) AuctionserviceClient {
 	return &auctionserviceClient{cc}
 }
 
-func (c *auctionserviceClient) SendBid(ctx context.Context, in *Bid, opts ...grpc.CallOption) (*BidAck, error) {
+func (c *auctionserviceClient) TryBid(ctx context.Context, in *Bid, opts ...grpc.CallOption) (*BidAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BidAck)
-	err := c.cc.Invoke(ctx, Auctionservice_SendBid_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Auctionservice_TryBid_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *auctionserviceClient) JoinAuction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Auction], error) {
+func (c *auctionserviceClient) JoinAuction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuctionResult, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Auctionservice_ServiceDesc.Streams[0], Auctionservice_JoinAuction_FullMethodName, cOpts...)
+	out := new(AuctionResult)
+	err := c.cc.Invoke(ctx, Auctionservice_JoinAuction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[Empty, Auction]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Auctionservice_JoinAuctionClient = grpc.ServerStreamingClient[Auction]
 
 // AuctionserviceServer is the server API for Auctionservice service.
 // All implementations must embed UnimplementedAuctionserviceServer
 // for forward compatibility.
 type AuctionserviceServer interface {
-	SendBid(context.Context, *Bid) (*BidAck, error)
-	JoinAuction(*Empty, grpc.ServerStreamingServer[Auction]) error
+	TryBid(context.Context, *Bid) (*BidAck, error)
+	JoinAuction(context.Context, *Empty) (*AuctionResult, error)
 	mustEmbedUnimplementedAuctionserviceServer()
 }
 
@@ -84,11 +75,11 @@ type AuctionserviceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuctionserviceServer struct{}
 
-func (UnimplementedAuctionserviceServer) SendBid(context.Context, *Bid) (*BidAck, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendBid not implemented")
+func (UnimplementedAuctionserviceServer) TryBid(context.Context, *Bid) (*BidAck, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TryBid not implemented")
 }
-func (UnimplementedAuctionserviceServer) JoinAuction(*Empty, grpc.ServerStreamingServer[Auction]) error {
-	return status.Errorf(codes.Unimplemented, "method JoinAuction not implemented")
+func (UnimplementedAuctionserviceServer) JoinAuction(context.Context, *Empty) (*AuctionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JoinAuction not implemented")
 }
 func (UnimplementedAuctionserviceServer) mustEmbedUnimplementedAuctionserviceServer() {}
 func (UnimplementedAuctionserviceServer) testEmbeddedByValue()                        {}
@@ -111,34 +102,41 @@ func RegisterAuctionserviceServer(s grpc.ServiceRegistrar, srv AuctionserviceSer
 	s.RegisterService(&Auctionservice_ServiceDesc, srv)
 }
 
-func _Auctionservice_SendBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auctionservice_TryBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Bid)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuctionserviceServer).SendBid(ctx, in)
+		return srv.(AuctionserviceServer).TryBid(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auctionservice_SendBid_FullMethodName,
+		FullMethod: Auctionservice_TryBid_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuctionserviceServer).SendBid(ctx, req.(*Bid))
+		return srv.(AuctionserviceServer).TryBid(ctx, req.(*Bid))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auctionservice_JoinAuction_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Empty)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Auctionservice_JoinAuction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(AuctionserviceServer).JoinAuction(m, &grpc.GenericServerStream[Empty, Auction]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(AuctionserviceServer).JoinAuction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auctionservice_JoinAuction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuctionserviceServer).JoinAuction(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Auctionservice_JoinAuctionServer = grpc.ServerStreamingServer[Auction]
 
 // Auctionservice_ServiceDesc is the grpc.ServiceDesc for Auctionservice service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -148,16 +146,14 @@ var Auctionservice_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuctionserviceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SendBid",
-			Handler:    _Auctionservice_SendBid_Handler,
+			MethodName: "tryBid",
+			Handler:    _Auctionservice_TryBid_Handler,
 		},
-	},
-	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "JoinAuction",
-			Handler:       _Auctionservice_JoinAuction_Handler,
-			ServerStreams: true,
+			MethodName: "JoinAuction",
+			Handler:    _Auctionservice_JoinAuction_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "Api/h5.proto",
 }
