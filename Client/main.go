@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 
 	h5 "github.com/DiSysCBFA/Handind-5/Api"
@@ -15,8 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func StartClient(wg *sync.WaitGroup, ports []string, id string) {
-	defer wg.Done()
+func StartClient(ports []string, id string) {
 	client := h5.NewAuctionserviceClient(nil)
 	for {
 		selectAction := promptui.Select{
@@ -85,7 +83,7 @@ func getBid(client h5.AuctionserviceClient, id string, ports []string) {
 	}
 
 	responses := [3]*h5.BidAck{}
-
+	//ports = []string{":4000", ":4001", ":4002"}
 	for index, port := range ports {
 		conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
