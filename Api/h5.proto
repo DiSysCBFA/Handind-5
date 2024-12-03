@@ -23,7 +23,7 @@ message Bid {
 
 message bidAck{
   string ack = 1;
-  int32 timestamp = 2;
+  int64 timestamp = 2;
 }
 
 message AuctionResult {

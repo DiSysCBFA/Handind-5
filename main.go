@@ -4,8 +4,10 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	client "github.com/DiSysCBFA/Handind-5/Client"
+	"github.com/DiSysCBFA/Handind-5/Server"
 	"github.com/manifoldco/promptui"
 )
 
@@ -27,6 +29,10 @@ func main() {
 
 		if result == "Start Server" {
 			log.Println("Starting server...")
+			auctionServer := Server.Server{
+				Timestamp: time.Now().UnixNano(),
+			}
+			log.Println(auctionServer)
 			/* auctionServer := server.NewServer("")
 			auctionServer.Start(ports[0], maxRetries) */
 		} else if result == "Start Client" {
@@ -36,7 +42,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("Failed to enter ID: %v", err)
 			}
-			go client.StartClient(&wg, ports, enterID)
+			go client.StartClient(&wg, ports, enteredID)
 		} else if result == "Exit" {
 			log.Println("Exiting...")
 			os.Exit(0)
