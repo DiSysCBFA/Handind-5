@@ -44,14 +44,6 @@ func (s *Server) TryBid(ctx context.Context, incommingBid *api.Bid) (*api.BidAck
 	}
 }
 
-func (s *Server) GetResult(ctx context.Context, empty *api.Empty) (*api.AuctionResult, error) {
-	result := &api.AuctionResult{
-		Status: "Highest Bidder:" + fmt.Sprint(s.HighestBid.Bid) + " by: " + s.HighestBid.Bidder,
-	}
-
-	return result, nil
-}
-
 func StartServer() *Server {
 
 	// Create a new gRPC server
@@ -84,7 +76,7 @@ func StartServer() *Server {
 }
 func (s *Server) JoinAuction(ctx context.Context, empty *api.Empty) (*api.AuctionResult, error) {
 	result := &api.AuctionResult{
-		Status: "Highest Bidder:" + fmt.Sprint(s.HighestBid.Bid) + " by: " + s.HighestBid.Bidder,
+		Status: "Highest Bid:" + fmt.Sprint(s.HighestBid.Bid) + " by: " + s.HighestBid.Bidder,
 	}
 	return result, nil
 }
