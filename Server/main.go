@@ -82,3 +82,9 @@ func StartServer() *Server {
 	}
 	return server
 }
+func (s *Server) JoinAuction(ctx context.Context, empty *api.Empty) (*api.AuctionResult, error) {
+	result := &api.AuctionResult{
+		Status: "Highest Bidder:" + fmt.Sprint(s.HighestBid.Bid) + " by: " + s.HighestBid.Bidder,
+	}
+	return result, nil
+}

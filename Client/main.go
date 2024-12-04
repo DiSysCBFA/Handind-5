@@ -45,7 +45,7 @@ func StartClient(ports []string, id string) {
 
 func retreiveResult(ports []string) {
 	responses := [3]*h5.AuctionResult{}
-	for _, port := range ports {
+	for i, port := range ports {
 		log.Println("Dialing", port)
 		conn, err := grpc.Dial(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -64,6 +64,10 @@ func retreiveResult(ports []string) {
 		}
 		log.Println("Current status:", response.Status)
 
+		responses[i] = response
+	}
+
+	if responses[0] != nil && responses[1] != nil && responses[2] != nil {
 		if reflect.DeepEqual(responses[0], responses[1]) {
 			log.Println(responses[0].Status)
 		} else if reflect.DeepEqual(responses[0], responses[2]) {
@@ -73,6 +77,8 @@ func retreiveResult(ports []string) {
 		} else {
 			log.Println("Servers don't agree. Øv Bøv")
 		}
+	} else {
+		log.Println("Not all responses are valid")
 	}
 }
 
