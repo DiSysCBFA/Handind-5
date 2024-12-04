@@ -15,7 +15,13 @@ import (
 )
 
 func StartClient(ports []string, id string) {
-	client := h5.NewAuctionserviceClient(nil)
+	conn, err := grpc.Dial(ports[0], grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to server: %v", err)
+	}
+	defer conn.Close()
+
+	client := h5.NewAuctionserviceClient(conn)
 	for {
 		selectAction := promptui.Select{
 			Label: "Select an option",
@@ -41,11 +47,12 @@ func retreiveResult(ports []string) {
 	responses := [3]*h5.AuctionResult{}
 	for _, port := range ports {
 		log.Println("Dialing", port)
-		conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to dial: %v. Attempting next port", err)
+			log.Printf("Failed to dial port %s: %v", port, err)
 			continue
 		}
+		defer conn.Close()
 
 		empty := &h5.Empty{}
 
@@ -82,14 +89,16 @@ func getBid(client h5.AuctionserviceClient, id string, ports []string) {
 		log.Fatalf("Failed to convert bid to int: %v", err)
 	}
 
-	responses := [3]*h5.BidAck{}
-	//ports = []string{":4000", ":4001", ":4002"}
+	responses := make([]*h5.BidAck, len(ports))
 	for index, port := range ports {
-		conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Println("The server at port " + port + " has crashed")
+			log.Printf("The server at port %s has crashed: %v", port, err)
+			responses[index] = nil // Explicitly set response to nil
 			continue
 		}
+		defer conn.Close()
+
 		activeBid := &h5.Bid{
 			Bid:       int64(intBid),
 			Bidder:    id,
@@ -99,18 +108,19 @@ func getBid(client h5.AuctionserviceClient, id string, ports []string) {
 		client = h5.NewAuctionserviceClient(conn)
 		respons, err := client.TryBid(context.Background(), activeBid)
 		if err != nil {
-			log.Println("The server at port " + port + " has crashed")
+			log.Printf("Failed to submit bid to server at port %s: %v", port, err)
+			responses[index] = nil
 			continue
 		}
 		responses[index] = respons
 	}
-	if reflect.DeepEqual(responses[0], responses[1]) {
-		log.Println(responses[0].Ack)
-	} else if reflect.DeepEqual(responses[0], responses[2]) {
-		log.Println(responses[0].Ack)
-	} else if reflect.DeepEqual(responses[1], responses[2]) {
-		log.Println(responses[1].Ack)
-	} else {
-		log.Println("Servers cant reach consensus. More than one server dont work")
+
+	// Ensure responses are not nil before comparison
+	for i := 0; i < len(responses); i++ {
+		if responses[i] == nil {
+			log.Printf("No response from server at port %s", ports[i])
+			continue
+		}
+		log.Printf("Response from server at port %s: %s", ports[i], responses[i].Ack)
 	}
 }
