@@ -59,7 +59,7 @@ func retreiveResult(ports []string) {
 		client := h5.NewAuctionserviceClient(conn)
 		response, err := client.JoinAuction(context.Background(), empty)
 		if err != nil {
-			log.Fatalf("Failed to join auction: %v", err)
+			log.Printf("Failed to join auction: %v", err)
 			continue
 		}
 		log.Println("Current status:", response.Status)
