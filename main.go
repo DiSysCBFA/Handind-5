@@ -30,7 +30,9 @@ func main() {
 
 		} else if result == "Start Client" {
 
-			enterID := promptui.Prompt{}
+			enterID := promptui.Prompt{
+				Label: "Enter Name",
+			}
 			enteredID, err := enterID.Run()
 			if err != nil {
 				log.Fatalf("Failed to enter ID: %v", err)

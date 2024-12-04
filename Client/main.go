@@ -108,7 +108,7 @@ func getBid(client h5.AuctionserviceClient, id string, ports []string) {
 		activeBid := &h5.Bid{
 			Bid:       int64(intBid),
 			Bidder:    id,
-			Timestamp: time.Now().Unix(),
+			Timestamp: time.Now().UnixNano(),
 		}
 
 		client = h5.NewAuctionserviceClient(conn)

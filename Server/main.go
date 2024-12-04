@@ -18,9 +18,9 @@ type Server struct {
 }
 
 func (s *Server) TryBid(ctx context.Context, incommingBid *api.Bid) (*api.BidAck, error) {
-	if incommingBid.Timestamp > s.Timestamp+15000000000 {
+	if incommingBid.Timestamp > (s.Timestamp + 15000000000) {
 		bidAck := &api.BidAck{
-			Ack:       "rejected",
+			Ack:       "Auction Ended",
 			Timestamp: time.Now().UnixNano(),
 		}
 
